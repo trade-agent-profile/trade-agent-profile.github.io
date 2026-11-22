@@ -1,0 +1,367 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trade-agent-profile.github.io/v0.1/message.schema.json",
+  "title": "trade-agent-profile message envelope v0.1.0",
+  "description": "Experimental reference specification. Not an official specification of any standards body. One business message. On A2A it is carried as exactly one Part of a Message (data = this envelope, mediaType = application/json); results come back as an Artifact. Where a payload has a shipment item, it must also conform to shipment.schema.json. The item in_reply_to may be omitted; every other item must be present.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "profile",
+    "profile_version",
+    "message_type",
+    "message_id",
+    "correlation_id",
+    "sent_at",
+    "sender",
+    "payload"
+  ],
+  "properties": {
+    "profile": { "type": "string", "const": "trade-agent-profile" },
+    "profile_version": { "type": "string", "$ref": "#/$defs/version" },
+    "message_type": {
+      "type": "string",
+      "enum": [
+        "quote_request",
+        "quote",
+        "booking_request",
+        "booking_confirmation",
+        "document_submission",
+        "discrepancy_notice",
+        "declaration_draft",
+        "approval",
+        "rejection",
+        "error"
+      ]
+    },
+    "message_id": { "type": "string", "$ref": "#/$defs/uuid" },
+    "correlation_id": { "type": "string", "$ref": "#/$defs/uuid" },
+    "in_reply_to": { "type": ["string", "null"], "$ref": "#/$defs/uuid" },
+    "sent_at": { "type": "string", "$ref": "#/$defs/datetime" },
+    "sender": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "name", "id"],
+      "properties": {
+        "role": { "type": "string", "enum": ["shipper", "forwarder", "customs_broker", "bank"] },
+        "name": { "type": "string", "minLength": 1 },
+        "id": { "type": "string", "minLength": 1 }
+      }
+    },
+    "payload": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "message_type": { "const": "quote_request" } }, "required": ["message_type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_quote_request" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "quote" } }, "required": ["message_type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_quote" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "booking_request" } }, "required": ["message_type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_booking_request" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "booking_confirmation" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_booking_confirmation" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "document_submission" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_document_submission" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "discrepancy_notice" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_discrepancy_notice" } } }
+    },
+    {
+      "if": {
+        "properties": { "message_type": { "const": "declaration_draft" } },
+        "required": ["message_type"]
+      },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_declaration_draft" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "approval" } }, "required": ["message_type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_approval" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "rejection" } }, "required": ["message_type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_rejection" } } }
+    },
+    {
+      "if": { "properties": { "message_type": { "const": "error" } }, "required": ["message_type"] },
+      "then": { "properties": { "payload": { "$ref": "#/$defs/payload_error" } } }
+    }
+  ],
+  "$defs": {
+    "payload_quote_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment", "reply_by", "note"],
+      "properties": {
+        "shipment": { "type": "object" },
+        "reply_by": { "type": ["string", "null"], "$ref": "#/$defs/date" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_quote": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment_id", "quote_number", "currency", "charges", "total", "valid_until", "note"],
+      "properties": {
+        "shipment_id": { "type": "string", "$ref": "#/$defs/shipment_id" },
+        "quote_number": { "type": "string", "minLength": 1 },
+        "currency": { "type": "string", "$ref": "#/$defs/currency" },
+        "charges": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["name", "amount"],
+            "properties": {
+              "name": { "type": "string", "minLength": 1 },
+              "amount": { "type": "string", "$ref": "#/$defs/amount" }
+            }
+          }
+        },
+        "total": { "type": "string", "$ref": "#/$defs/amount" },
+        "valid_until": { "type": "string", "$ref": "#/$defs/date" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_booking_request": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment", "quote_number", "note"],
+      "properties": {
+        "shipment": { "type": "object" },
+        "quote_number": { "type": "string", "minLength": 1 },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_booking_confirmation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment_id", "booking_number", "etd", "eta", "cargo_cutoff_at", "note"],
+      "properties": {
+        "shipment_id": { "type": "string", "$ref": "#/$defs/shipment_id" },
+        "booking_number": { "type": "string", "minLength": 1 },
+        "etd": { "type": "string", "$ref": "#/$defs/date" },
+        "eta": { "type": "string", "$ref": "#/$defs/date" },
+        "cargo_cutoff_at": { "type": ["string", "null"], "$ref": "#/$defs/datetime" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_document_submission": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment", "note"],
+      "properties": {
+        "shipment": { "type": "object" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_discrepancy_notice": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment_id", "discrepancies", "note"],
+      "properties": {
+        "shipment_id": { "type": "string", "$ref": "#/$defs/shipment_id" },
+        "discrepancies": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["doc_type", "doc_number", "path", "document_value", "authoritative_value"],
+            "properties": {
+              "doc_type": { "$ref": "#/$defs/doc_type" },
+              "doc_number": { "type": ["string", "null"] },
+              "path": { "type": "string", "minLength": 1 },
+              "document_value": { "type": ["string", "number", "boolean"] },
+              "authoritative_value": { "type": ["string", "number", "boolean"] }
+            }
+          }
+        },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_declaration_draft": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "shipment_id",
+        "draft_number",
+        "mock",
+        "exporter",
+        "consignee",
+        "port_of_loading",
+        "port_of_discharge",
+        "etd",
+        "incoterms",
+        "currency",
+        "invoice_amount",
+        "lines",
+        "unverified",
+        "note"
+      ],
+      "properties": {
+        "shipment_id": { "type": "string", "$ref": "#/$defs/shipment_id" },
+        "draft_number": { "type": "string", "minLength": 1 },
+        "mock": { "type": "boolean", "const": true },
+        "exporter": { "type": "object", "$ref": "#/$defs/party" },
+        "consignee": { "type": "object", "$ref": "#/$defs/party" },
+        "port_of_loading": { "type": "string", "$ref": "#/$defs/locode" },
+        "port_of_discharge": { "type": "string", "$ref": "#/$defs/locode" },
+        "etd": { "type": ["string", "null"], "$ref": "#/$defs/date" },
+        "incoterms": { "type": "string", "$ref": "#/$defs/incoterms" },
+        "currency": { "type": "string", "$ref": "#/$defs/currency" },
+        "invoice_amount": { "type": "string", "$ref": "#/$defs/amount" },
+        "lines": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "line_no",
+              "description",
+              "hs_code_jp",
+              "quantity",
+              "quantity_unit",
+              "net_weight_kg",
+              "amount"
+            ],
+            "properties": {
+              "line_no": { "type": "integer", "minimum": 1 },
+              "description": { "type": "string", "minLength": 1 },
+              "hs_code_jp": { "type": ["string", "null"], "$ref": "#/$defs/hs_code_jp" },
+              "quantity": { "type": "string", "$ref": "#/$defs/quantity" },
+              "quantity_unit": { "type": "string", "$ref": "#/$defs/unit" },
+              "net_weight_kg": { "type": ["string", "null"], "$ref": "#/$defs/weight" },
+              "amount": { "type": "string", "$ref": "#/$defs/amount" }
+            }
+          }
+        },
+        "unverified": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment_id", "note"],
+      "properties": {
+        "shipment_id": { "type": "string", "$ref": "#/$defs/shipment_id" },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_rejection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["shipment_id", "reason", "note"],
+      "properties": {
+        "shipment_id": { "type": ["string", "null"], "$ref": "#/$defs/shipment_id" },
+        "reason": { "type": "string", "minLength": 1 },
+        "note": { "type": ["string", "null"] }
+      }
+    },
+    "payload_error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "text", "issues"],
+      "properties": {
+        "code": {
+          "type": "string",
+          "enum": [
+            "PROFILE_UNKNOWN",
+            "PROFILE_VERSION_UNSUPPORTED",
+            "VALIDATION_FAILED",
+            "MESSAGE_ID_REUSED",
+            "UNEXPECTED_MESSAGE",
+            "INTERNAL_ERROR"
+          ]
+        },
+        "text": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["ja", "en"],
+          "properties": {
+            "ja": { "type": "string", "minLength": 1 },
+            "en": { "type": "string", "minLength": 1 }
+          }
+        },
+        "issues": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["code", "path"],
+            "properties": {
+              "code": { "type": "string", "minLength": 1 },
+              "path": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "doc_type": {
+      "type": "string",
+      "enum": [
+        "commercial_invoice",
+        "packing_list",
+        "bill_of_lading",
+        "sea_waybill",
+        "shipping_instruction",
+        "booking_confirmation",
+        "export_declaration",
+        "export_permit",
+        "certificate_of_origin",
+        "insurance_certificate",
+        "weight_certificate",
+        "photo",
+        "other"
+      ]
+    },
+    "party": {
+      "additionalProperties": false,
+      "required": ["name", "address", "country"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "address": { "type": ["string", "null"], "minLength": 1 },
+        "country": { "type": ["string", "null"], "$ref": "#/$defs/country" }
+      }
+    },
+    "version": { "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "x-kind": "version" },
+    "uuid": {
+      "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+      "x-kind": "uuid"
+    },
+    "shipment_id": { "pattern": "^SHP-[0-9]{4}-[0-9]{4,}$", "x-kind": "shipment_id" },
+    "date": { "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", "x-kind": "date" },
+    "datetime": {
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]+)?(Z|[+-][0-9]{2}:[0-9]{2})$",
+      "x-kind": "datetime"
+    },
+    "country": { "pattern": "^[A-Z]{2}$", "x-kind": "country" },
+    "currency": { "pattern": "^[A-Z]{3}$", "x-kind": "currency" },
+    "locode": { "pattern": "^[A-Z]{2}[A-Z2-9]{3}$", "x-kind": "locode" },
+    "unit": { "pattern": "^[A-Z0-9]{2,3}$", "x-kind": "unit" },
+    "incoterms": { "pattern": "^[A-Z]{3}$", "x-kind": "incoterms" },
+    "amount": { "pattern": "^(0|[1-9][0-9]*)\\.[0-9]{2}$", "x-kind": "amount" },
+    "quantity": { "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,3})?$", "x-kind": "quantity" },
+    "weight": { "pattern": "^(0|[1-9][0-9]*)(\\.[0-9]{1,3})?$", "x-kind": "weight" },
+    "hs_code_jp": { "pattern": "^[0-9]{9}$", "x-kind": "hs_code_jp" }
+  }
+}

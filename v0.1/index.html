@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>trade-agent-profile v0.1</title>
+<style>body{font-family:system-ui,sans-serif;max-width:46rem;margin:2rem auto;padding:0 1rem;line-height:1.6}code,pre{background:#f4f4f4}pre{padding:.75rem;overflow-x:auto}</style>
+</head>
+<body>
+<h1>trade-agent-profile v0.1</h1>
+<p><strong>これは実験的な参照仕様です。いずれの標準化団体の公式仕様でもありません。</strong><br>判断するのは利用者です。このツールは下調べと記録を担います。</p>
+<p><strong>This is an experimental reference specification. It is not an official specification of any standards body.</strong><br>The user makes the decisions. This tool only helps with preliminary checks and record keeping.</p>
+<p><code>https://trade-agent-profile.github.io/v0.1</code> は、貿易用プロファイル 0.1.0 を A2A の拡張として識別する URI です。AgentCard の <code>capabilities.extensions</code> に、この URI を書いて宣言します。意味が変わる版では、新しい URI になります。</p>
+<p><code>https://trade-agent-profile.github.io/v0.1</code> identifies version 0.1.0 of the trade profile as an A2A extension. Declare it in the AgentCard's <code>capabilities.extensions</code>. A version that changes meaning gets a new URI.</p>
+<pre>{
+  &quot;uri&quot;: &quot;https://trade-agent-profile.github.io/v0.1&quot;,
+  &quot;required&quot;: true,
+  &quot;params&quot;: {
+    &quot;profile&quot;: &quot;trade-agent-profile&quot;,
+    &quot;profile_versions&quot;: [
+      &quot;0.1.0&quot;
+    ]
+  }
+}</pre>
+<p><code>roles</code> と <code>accepts</code> の書き方は、仕様の第4.1節にあります。 / See section 4.1 of the specification for <code>roles</code> and <code>accepts</code>.</p>
+<ul>
+<li><a href="https://github.com/trade-agent-profile/trade-agent-profile/blob/main/docs/PROFILE.md">仕様（日本語） / Specification (Japanese)</a></li>
+<li><a href="https://github.com/trade-agent-profile/trade-agent-profile/blob/main/docs/QUICKSTART.ja.md">30分でつなぐ手引き（日本語）</a></li>
+<li><a href="https://github.com/trade-agent-profile/trade-agent-profile/blob/main/docs/QUICKSTART.en.md">30-minute quickstart (English)</a></li>
+<li><a href="https://github.com/trade-agent-profile/trade-agent-profile/blob/main/docs/QUICKSTART.zh.md">30 分钟上手指南（中文）</a></li>
+<li><a href="https://github.com/trade-agent-profile/trade-agent-profile/blob/main/docs/MAPPING.md">既存の標準との対応表 / Mapping to existing standards</a></li>
+<li><a href="shipment.schema.json">共通データ契約のスキーマ / Shared data contract schema</a></li>
+<li><a href="message.schema.json">メッセージの封筒のスキーマ / Message envelope schema</a></li>
+<li><a href="https://github.com/trade-agent-profile/trade-agent-profile">リポジトリ / Repository</a></li>
+</ul>
+<p>ライセンス：スキーマは Apache-2.0、文書は CC BY 4.0 / License: schemas Apache-2.0, documents CC BY 4.0</p>
+</body>
+</html>
