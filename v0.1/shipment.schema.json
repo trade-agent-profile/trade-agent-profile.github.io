@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://trade-agent-profile.github.io/v0.1/shipment.schema.json",
-  "title": "shipment.json - common data contract v0.1.0",
-  "description": "Experimental reference specification. Not an official specification of any standards body. One shipment per JSON document. Top-level values are the reconciled (authoritative) values; documents[].fields hold what each document said and where it was found. Every item must be present; use null where the value is unknown and null is allowed. Codes are checked for format only.",
+  "title": "shipment.json - common data contract v0.1 (versions 0.1.0 and 0.1.1)",
+  "description": "Experimental reference specification. Not an official specification of any standards body. One shipment per JSON document. Top-level values are the reconciled (authoritative) values; documents[].fields hold what each document said and where it was found. Every item of the document's own contract_version must be present; use null where the value is unknown and null is allowed. The shape of parties, trade_terms and transport is chosen by contract_version: 0.1.1 adds parties.notify_parties, trade_terms.freight_amount, trade_terms.insurance_premium_amount, transport.vessel_name, transport.voyage_number and transport.booking_number. A 0.1.0 document stays valid as it is. Codes are checked for format only.",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -27,54 +27,9 @@
       "type": "string",
       "enum": ["draft", "checked", "submitted", "approved", "rejected", "cancelled"]
     },
-    "parties": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["shipper", "exporter", "consignee"],
-      "properties": {
-        "shipper": { "type": "object", "$ref": "#/$defs/party" },
-        "exporter": { "type": ["object", "null"], "$ref": "#/$defs/party" },
-        "consignee": { "type": "object", "$ref": "#/$defs/party" }
-      }
-    },
-    "trade_terms": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["incoterms", "incoterms_version", "place", "currency", "payment_terms"],
-      "properties": {
-        "incoterms": { "type": "string", "$ref": "#/$defs/incoterms" },
-        "incoterms_version": { "type": "string", "$ref": "#/$defs/incoterms_version" },
-        "place": { "type": ["string", "null"], "$ref": "#/$defs/locode" },
-        "currency": { "type": "string", "$ref": "#/$defs/currency" },
-        "payment_terms": { "type": ["string", "null"], "minLength": 1 }
-      }
-    },
-    "transport": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": ["mode", "port_of_loading", "port_of_discharge", "etd", "eta", "containers"],
-      "properties": {
-        "mode": { "type": "string", "enum": ["sea", "air", "road", "rail", "multimodal"] },
-        "port_of_loading": { "type": "string", "$ref": "#/$defs/locode" },
-        "port_of_discharge": { "type": "string", "$ref": "#/$defs/locode" },
-        "etd": { "type": ["string", "null"], "$ref": "#/$defs/date" },
-        "eta": { "type": ["string", "null"], "$ref": "#/$defs/date" },
-        "containers": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["number", "iso_type", "seals", "gross_weight_kg"],
-            "properties": {
-              "number": { "type": "string", "$ref": "#/$defs/container_number" },
-              "iso_type": { "type": ["string", "null"], "$ref": "#/$defs/iso_type" },
-              "seals": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-              "gross_weight_kg": { "type": ["string", "null"], "$ref": "#/$defs/weight" }
-            }
-          }
-        }
-      }
-    },
+    "parties": {},
+    "trade_terms": {},
+    "transport": {},
     "lines": {
       "type": "array",
       "minItems": 1,
@@ -198,6 +153,48 @@
       "additionalProperties": { "type": "object" }
     }
   },
+  "allOf": [
+    {
+      "$comment": "A well-formed contract_version must be one this schema knows.",
+      "if": {
+        "required": ["contract_version"],
+        "properties": {
+          "contract_version": { "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" }
+        }
+      },
+      "then": {
+        "properties": { "contract_version": { "enum": ["0.1.0", "0.1.1"] } }
+      }
+    },
+    {
+      "$comment": "Shape of a 0.1.0 document. Frozen: do not change.",
+      "if": {
+        "required": ["contract_version"],
+        "properties": { "contract_version": { "const": "0.1.0" } }
+      },
+      "then": {
+        "properties": {
+          "parties": { "type": "object", "$ref": "#/$defs/parties_0_1_0" },
+          "trade_terms": { "type": "object", "$ref": "#/$defs/trade_terms_0_1_0" },
+          "transport": { "type": "object", "$ref": "#/$defs/transport_0_1_0" }
+        }
+      }
+    },
+    {
+      "$comment": "Shape of a 0.1.1 document: the 0.1.0 items plus six added items.",
+      "if": {
+        "required": ["contract_version"],
+        "properties": { "contract_version": { "const": "0.1.1" } }
+      },
+      "then": {
+        "properties": {
+          "parties": { "type": "object", "$ref": "#/$defs/parties_0_1_1" },
+          "trade_terms": { "type": "object", "$ref": "#/$defs/trade_terms_0_1_1" },
+          "transport": { "type": "object", "$ref": "#/$defs/transport_0_1_1" }
+        }
+      }
+    }
+  ],
   "$defs": {
     "version": { "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$", "x-kind": "version" },
     "shipment_id": { "pattern": "^SHP-[0-9]{4}-[0-9]{4,}$", "x-kind": "shipment_id" },
@@ -230,6 +227,114 @@
         "name": { "type": "string", "minLength": 1 },
         "address": { "type": ["string", "null"], "minLength": 1 },
         "country": { "type": ["string", "null"], "$ref": "#/$defs/country" }
+      }
+    },
+    "container": {
+      "additionalProperties": false,
+      "required": ["number", "iso_type", "seals", "gross_weight_kg"],
+      "properties": {
+        "number": { "type": "string", "$ref": "#/$defs/container_number" },
+        "iso_type": { "type": ["string", "null"], "$ref": "#/$defs/iso_type" },
+        "seals": { "type": "array", "items": { "type": "string", "minLength": 1 } },
+        "gross_weight_kg": { "type": ["string", "null"], "$ref": "#/$defs/weight" }
+      }
+    },
+    "parties_0_1_0": {
+      "additionalProperties": false,
+      "required": ["shipper", "exporter", "consignee"],
+      "properties": {
+        "shipper": { "type": "object", "$ref": "#/$defs/party" },
+        "exporter": { "type": ["object", "null"], "$ref": "#/$defs/party" },
+        "consignee": { "type": "object", "$ref": "#/$defs/party" }
+      }
+    },
+    "parties_0_1_1": {
+      "additionalProperties": false,
+      "required": ["shipper", "exporter", "consignee", "notify_parties"],
+      "properties": {
+        "shipper": { "type": "object", "$ref": "#/$defs/party" },
+        "exporter": { "type": ["object", "null"], "$ref": "#/$defs/party" },
+        "consignee": { "type": "object", "$ref": "#/$defs/party" },
+        "notify_parties": {
+          "type": "array",
+          "maxItems": 3,
+          "items": { "type": "object", "$ref": "#/$defs/party" }
+        }
+      }
+    },
+    "trade_terms_0_1_0": {
+      "additionalProperties": false,
+      "required": ["incoterms", "incoterms_version", "place", "currency", "payment_terms"],
+      "properties": {
+        "incoterms": { "type": "string", "$ref": "#/$defs/incoterms" },
+        "incoterms_version": { "type": "string", "$ref": "#/$defs/incoterms_version" },
+        "place": { "type": ["string", "null"], "$ref": "#/$defs/locode" },
+        "currency": { "type": "string", "$ref": "#/$defs/currency" },
+        "payment_terms": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "trade_terms_0_1_1": {
+      "additionalProperties": false,
+      "required": [
+        "incoterms",
+        "incoterms_version",
+        "place",
+        "currency",
+        "payment_terms",
+        "freight_amount",
+        "insurance_premium_amount"
+      ],
+      "properties": {
+        "incoterms": { "type": "string", "$ref": "#/$defs/incoterms" },
+        "incoterms_version": { "type": "string", "$ref": "#/$defs/incoterms_version" },
+        "place": { "type": ["string", "null"], "$ref": "#/$defs/locode" },
+        "currency": { "type": "string", "$ref": "#/$defs/currency" },
+        "payment_terms": { "type": ["string", "null"], "minLength": 1 },
+        "freight_amount": { "type": ["string", "null"], "$ref": "#/$defs/amount" },
+        "insurance_premium_amount": { "type": ["string", "null"], "$ref": "#/$defs/amount" }
+      }
+    },
+    "transport_0_1_0": {
+      "additionalProperties": false,
+      "required": ["mode", "port_of_loading", "port_of_discharge", "etd", "eta", "containers"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["sea", "air", "road", "rail", "multimodal"] },
+        "port_of_loading": { "type": "string", "$ref": "#/$defs/locode" },
+        "port_of_discharge": { "type": "string", "$ref": "#/$defs/locode" },
+        "etd": { "type": ["string", "null"], "$ref": "#/$defs/date" },
+        "eta": { "type": ["string", "null"], "$ref": "#/$defs/date" },
+        "containers": {
+          "type": "array",
+          "items": { "type": "object", "$ref": "#/$defs/container" }
+        }
+      }
+    },
+    "transport_0_1_1": {
+      "additionalProperties": false,
+      "required": [
+        "mode",
+        "port_of_loading",
+        "port_of_discharge",
+        "etd",
+        "eta",
+        "vessel_name",
+        "voyage_number",
+        "booking_number",
+        "containers"
+      ],
+      "properties": {
+        "mode": { "type": "string", "enum": ["sea", "air", "road", "rail", "multimodal"] },
+        "port_of_loading": { "type": "string", "$ref": "#/$defs/locode" },
+        "port_of_discharge": { "type": "string", "$ref": "#/$defs/locode" },
+        "etd": { "type": ["string", "null"], "$ref": "#/$defs/date" },
+        "eta": { "type": ["string", "null"], "$ref": "#/$defs/date" },
+        "vessel_name": { "type": ["string", "null"], "minLength": 1 },
+        "voyage_number": { "type": ["string", "null"], "minLength": 1 },
+        "booking_number": { "type": ["string", "null"], "minLength": 1 },
+        "containers": {
+          "type": "array",
+          "items": { "type": "object", "$ref": "#/$defs/container" }
+        }
       }
     }
   }
